@@ -1,7 +1,7 @@
 #include "timers.h"
 #include <stdio.h>
 
-int results[10];
+int results[32];
 int numresults = 0;
 
 void ClearResults() {
@@ -38,6 +38,32 @@ void Kickoff3() {
 void Setup() {
     ClearResults();
     ClearTimers();
+}
+
+void TestTiming() {
+    const int T1 = 73;
+    const int T2 = 49;
+    const int T3 = 37;
+
+    Setup();
+    AddTimer(T1, Oneshot1);
+    AddTimer(T1+T2, Oneshot2);
+    AddTimer(T1+T2+T3, Oneshot3);
+
+    AdvanceTimers(T1-1);
+    printf("1.1 %s\n", numresults == 0 ? "PASS" : "FAIL");
+    AdvanceTimers(1);
+    printf("1.2 %s\n", numresults == 1 ? "PASS" : "FAIL");
+
+    AdvanceTimers(T2-1);
+    printf("1.3 %s\n", numresults == 1 ? "PASS" : "FAIL");
+    AdvanceTimers(1);
+    printf("1.4 %s\n", numresults == 2 ? "PASS" : "FAIL");
+
+    AdvanceTimers(T3-1);
+    printf("1.5 %s\n", numresults == 2 ? "PASS" : "FAIL");
+    AdvanceTimers(1);
+    printf("1.6 %s\n", numresults == 3 ? "PASS" : "FAIL");
 }
 
 void TestReodering() {
@@ -84,26 +110,17 @@ void TestReodering() {
     printf("2.6 %s\n", (numresults == 3 && results[0] == 1 && results[1] == 2 && results[2] == 3) ? "PASS" : "FAIL");
 }
 
-int main() {
-    Setup();
-    AddTimer(100, Oneshot1);
-    AddTimer(200, Oneshot2);
-
-    AdvanceTimers(99);
-    printf("1.1 %s\n", numresults == 0 ? "PASS" : "FAIL");
-    AdvanceTimers(1);
-    printf("1.2 %s\n", numresults == 1 ? "PASS" : "FAIL");
-    AdvanceTimers(99);
-    printf("1.3 %s\n", numresults == 1 ? "PASS" : "FAIL");
-    AdvanceTimers(1);
-    printf("1.4 %s\n", numresults == 2 ? "PASS" : "FAIL");
-
-    TestReodering();
-
+void TestKickoff() {
     Setup();
     AddTimer(100, Kickoff1);
     AddTimer(200, Oneshot2);
 
     AdvanceTimers(1000);
     printf("3.1 %s\n", (numresults == 3 && results[0] == 11 && results[1] == 1 && results[2] == 2) ? "PASS" : "FAIL");
+}
+
+int main() {
+    TestTiming();
+    TestReodering();
+    TestKickoff();
 }
