@@ -1,7 +1,17 @@
 #include "timers.h"
 #include <stdio.h>
 
-int results[32];
+enum Result {
+    ONESHOT1,
+    ONESHOT2,
+    ONESHOT3,
+    KICKOFF1,
+    KICKOFF2,
+    KICKOFF3,
+    PERIODIC1,
+};
+
+Result results[32];
 int numresults = 0;
 
 void ClearResults() {
@@ -9,30 +19,35 @@ void ClearResults() {
 }
 
 void Oneshot1() {
-    results[numresults++] = 1;
+    results[numresults++] = ONESHOT1;
 }
 
 void Oneshot2() {
-    results[numresults++] = 2;
+    results[numresults++] = ONESHOT2;
 }
 
 void Oneshot3() {
-    results[numresults++] = 3;
+    results[numresults++] = ONESHOT3;
 }
 
 void Kickoff1() {
-    results[numresults++] = 11;
+    results[numresults++] = KICKOFF1;
     AddTimer(25, Oneshot1);
 }
 
 void Kickoff2() {
-    results[numresults++] = 22;
+    results[numresults++] = KICKOFF2;
     AddTimer(50, Oneshot2);
 }
 
 void Kickoff3() {
-    results[numresults++] = 33;
+    results[numresults++] = KICKOFF3;
     AddTimer(75, Oneshot3);
+}
+
+void Periodic1() {
+    results[numresults++] = PERIODIC1;
+    AddTimer(10, Periodic1);
 }
 
 void Setup() {
@@ -72,42 +87,42 @@ void TestReodering() {
     AddTimer(200, Oneshot2);
     AddTimer(300, Oneshot3);
     AdvanceTimers(500);
-    printf("2.1 %s\n", (numresults == 3 && results[0] == 1 && results[1] == 2 && results[2] == 3) ? "PASS" : "FAIL");
+    printf("2.1 %s\n", (numresults == 3 && results[0] == ONESHOT1 && results[1] == ONESHOT2 && results[2] == ONESHOT3) ? "PASS" : "FAIL");
 
     Setup();
     AddTimer(100, Oneshot1);
     AddTimer(300, Oneshot3);
     AddTimer(200, Oneshot2);
     AdvanceTimers(500);
-    printf("2.2 %s\n", (numresults == 3 && results[0] == 1 && results[1] == 2 && results[2] == 3) ? "PASS" : "FAIL");
+    printf("2.2 %s\n", (numresults == 3 && results[0] == ONESHOT1 && results[1] == ONESHOT2 && results[2] == ONESHOT3) ? "PASS" : "FAIL");
 
     Setup();
     AddTimer(300, Oneshot3);
     AddTimer(100, Oneshot1);
     AddTimer(200, Oneshot2);
     AdvanceTimers(500);
-    printf("2.3 %s\n", (numresults == 3 && results[0] == 1 && results[1] == 2 && results[2] == 3) ? "PASS" : "FAIL");
+    printf("2.3 %s\n", (numresults == 3 && results[0] == ONESHOT1 && results[1] == ONESHOT2 && results[2] == ONESHOT3) ? "PASS" : "FAIL");
 
     Setup();
     AddTimer(300, Oneshot3);
     AddTimer(200, Oneshot2);
     AddTimer(100, Oneshot1);
     AdvanceTimers(500);
-    printf("2.4 %s\n", (numresults == 3 && results[0] == 1 && results[1] == 2 && results[2] == 3) ? "PASS" : "FAIL");
+    printf("2.4 %s\n", (numresults == 3 && results[0] == ONESHOT1 && results[1] == ONESHOT2 && results[2] == ONESHOT3) ? "PASS" : "FAIL");
 
     Setup();
     AddTimer(200, Oneshot2);
     AddTimer(300, Oneshot3);
     AddTimer(100, Oneshot1);
     AdvanceTimers(500);
-    printf("2.5 %s\n", (numresults == 3 && results[0] == 1 && results[1] == 2 && results[2] == 3) ? "PASS" : "FAIL");
+    printf("2.5 %s\n", (numresults == 3 && results[0] == ONESHOT1 && results[1] == ONESHOT2 && results[2] == ONESHOT3) ? "PASS" : "FAIL");
 
     Setup();
     AddTimer(200, Oneshot2);
     AddTimer(100, Oneshot1);
     AddTimer(300, Oneshot3);
     AdvanceTimers(500);
-    printf("2.6 %s\n", (numresults == 3 && results[0] == 1 && results[1] == 2 && results[2] == 3) ? "PASS" : "FAIL");
+    printf("2.6 %s\n", (numresults == 3 && results[0] == ONESHOT1 && results[1] == ONESHOT2 && results[2] == ONESHOT3) ? "PASS" : "FAIL");
 }
 
 void TestKickoff() {
@@ -116,11 +131,20 @@ void TestKickoff() {
     AddTimer(200, Oneshot2);
 
     AdvanceTimers(1000);
-    printf("3.1 %s\n", (numresults == 3 && results[0] == 11 && results[1] == 1 && results[2] == 2) ? "PASS" : "FAIL");
+    printf("3.1 %s\n", (numresults == 3 && results[0] == KICKOFF1 && results[1] == ONESHOT1 && results[2] == ONESHOT2) ? "PASS" : "FAIL");
+}
+
+void TestPeriodic() {
+    Setup();
+    AddTimer(100, Periodic1);
+
+    AdvanceTimers(200);
+    printf("4.1 %s\n", numresults == 11 ? "PASS" : "FAIL");
 }
 
 int main() {
     TestTiming();
     TestReodering();
     TestKickoff();
+    TestPeriodic();
 }
