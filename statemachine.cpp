@@ -1,10 +1,5 @@
 #include <stdio.h>
 
-// implement a scheduler system to put timing at the forefront
-//
-//
-//
-
 // on top of this, can implement a very simple state machine for device with
 // a few actions
 //
@@ -59,7 +54,6 @@ public:
     void advance(int seconds);
     void advanceTime(int seconds);
     void changeMode(Mode newMode);
-    // int nextAdvanceEvent();
 
     Mode mode;
     int modeSeconds;
@@ -76,28 +70,6 @@ void State::changeMode(Mode newMode) {
 void State::heartbeat() {
     heartbeatSeconds = 0;
 }
-
-// add "get next time event" function
-// return nothing
-// return start
-
-// can we reframe the check to be how soon will something happen instead of
-// a conditional?
-
-// int State::nextAdvanceEvent() {
-//     int minTime = 1000000;
-//
-//     switch (mode) {
-//         case DISABLED:
-//             break;
-//         case STOPPED:
-//             if (modeSeconds)
-//             break;
-//     }
-// }
-
-// could also design the time based stuff around a scheduler + state machine
-// this extracts the common bits of time related items out.
 
 void State::advance(int seconds) {
     while (seconds > 0) {
@@ -186,122 +158,31 @@ void testStopped() {
     printf("%s\n", nc.mode == STARTING ? "PASS" : "FAIL");
 }
 
-// void testStarting() {
-//     State nc = {
-//         .mode = STARTING,
-//         .modeSeconds = 0,
-//     };
-//
-//     nc.advance(119);
-//     printf("%s\n", nc.mode == STARTING ? "PASS" : "FAIL");
-//
-//     nc.advance(1);
-//     printf("%s\n", nc.mode == STARTED ? "PASS" : "FAIL");
-// }
+void testStarting() {
+    State nc = {
+        .mode = STARTING,
+        .modeSeconds = 0,
+    };
 
-struct Timer {
-    int timeout;
-    void (*callback)();
-};
+    nc.advance(119);
+    printf("%s\n", nc.mode == STARTING ? "PASS" : "FAIL");
 
-Timer timers[16];
-int numTimers;
-int nextTimer;
-
-void InitTimers() {
-    numTimers = 0;
-    nextTimer = -1;
-}
-
-void UpdateNextTimer() {
-    nextTimer = -1;
-    int nextTimeout = 1000000;
-
-    for (int i = 0; i < numTimers; i++) {
-        if (timers[i].timeout < nextTimeout) {
-            nextTimer = i;
-            nextTimeout = timers[i].timeout;
-        }
-    }
-
-    printf("Next Timer is %d\n", nextTimer);
-}
-
-int AddTimer(int timeout, void (*callback)()) {
-    if (numTimers >= 16) {
-        return -1;
-    }
-
-    timers[numTimers].timeout = timeout;
-    timers[numTimers].callback = callback;
-    numTimers++;
-
-    UpdateNextTimer();
-
-    return numTimers-1;
-}
-
-void RemoveTimer(int i) {
-    if (i >= numTimers) {
-        return;
-    }
-
-    timers[i].timeout = timers[numTimers-1].timeout;
-    timers[i].callback = timers[numTimers-1].callback;
-    numTimers--;
-
-    UpdateNextTimer();
-}
-
-void AdvanceTime(int t) {
-    while (nextTimer >= 0 && t >= timers[nextTimer].timeout) {
-        for (int i = 0; i < numTimers; i++) {
-            timers[i].timeout -= timers[nextTimer].timeout;
-        }
-
-        t -= timers[nextTimer].timeout;
-
-        printf("@%d\n", timers[nextTimer].timeout);
-        timers[nextTimer].callback();
-        RemoveTimer(nextTimer);
-    }
-
-    for (int i = 0; i < numTimers; i++) {
-        timers[i].timeout -= t;
-    }
-}
-
-void callback1() {
-    printf("ready 1!\n");
-    AddTimer(5, callback1);
-}
-
-void callback2() {
-    printf("ready 2!\n");
-    AddTimer(5, callback2);
+    nc.advance(1);
+    printf("%s\n", nc.mode == STARTED ? "PASS" : "FAIL");
 }
 
 int main() {
-    AddTimer(10, callback1);
-    AddTimer(20, callback2);
+    State nc = {.mode = STARTED, .modeSeconds = 0, .heartbeatSeconds = 0};
 
-    AdvanceTime(20);
-
-
-    // testDisabled();
-    // testStopped();
-
-    // State nc = {.mode = STARTED, .modeSeconds = 0, .heartbeatSeconds = 0};
-    //
-    // nc.advance(100);
-    // nc.advance(100);
-    // nc.heartbeat();
-    // nc.advance(100);
-    // nc.advance(100);
-    // nc.heartbeat();
-    // nc.advance(100);
-    // nc.advance(100);
-    // nc.advance(100);
-    // nc.heartbeat();
-    // nc.advance(500);
+    nc.advance(100);
+    nc.advance(100);
+    nc.heartbeat();
+    nc.advance(100);
+    nc.advance(100);
+    nc.heartbeat();
+    nc.advance(100);
+    nc.advance(100);
+    nc.advance(100);
+    nc.heartbeat();
+    nc.advance(500);
 }
